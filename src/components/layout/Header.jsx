@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { ShoppingCartIcon, MagnifyingGlassIcon, MapPinIcon } from '@heroicons/react/24/outline'
 import { useCart } from '../../context/CartContext'
 import { PRODUKTE } from '../../data/produkte'
@@ -9,6 +9,7 @@ export default function Header({ plz, markt, onMarktAendern }) {
   const [suche, setSuche] = useState('')
   const [sucheAktiv, setSucheAktiv] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   const suchergebnisse = suche.length >= 2
     ? PRODUKTE.filter(p => p.name.toLowerCase().includes(suche.toLowerCase())).slice(0, 5)
@@ -41,31 +42,26 @@ export default function Header({ plz, markt, onMarktAendern }) {
 
           {/* Haupt-Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            <NavLink
-              to="/kategorie/suesse-salziges"
-              className="px-4 py-2 text-sm font-medium text-gray-200 hover:text-white hover:bg-white/15 rounded transition-colors"
-            >
-              Markt &amp; Angebote
-            </NavLink>
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                `px-4 py-2 text-sm font-bold rounded transition-colors ${
-                  isActive
-                    ? 'bg-brand-yellow text-gray-900'
-                    : 'text-gray-200 hover:text-white hover:bg-white/15'
-                }`
-              }
-            >
-              Abholservice
-            </NavLink>
-            <NavLink
-              to="/kategorie/obst-gemuese?filter=Bio"
-              className="px-4 py-2 text-sm font-medium text-gray-200 hover:text-white hover:bg-white/15 rounded transition-colors"
-            >
-              Ernährung
-            </NavLink>
+            {[
+              { label: 'Markt & Angebote', to: '/kategorie/suesses-salziges' },
+              { label: 'Abholservice',     to: '/', end: true },
+              { label: 'Ernährung',        to: '/kategorie/obst-gemuese' },
+            ].map(item => (
+              <NavLink
+                key={item.label}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `px-4 py-2 text-sm font-bold rounded transition-colors ${
+                    isActive
+                      ? 'bg-brand-yellow text-gray-900'
+                      : 'text-gray-200 hover:text-white hover:bg-white/15'
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
 
           {/* Rechte Seite */}
@@ -157,24 +153,31 @@ export default function Header({ plz, markt, onMarktAendern }) {
           {/* Sub-Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {[
-              { label: 'Sortiment',  to: '/' },
-              { label: 'Bio',        to: '/kategorie/obst-gemuese?filter=Bio' },
-              { label: 'Regional',   to: '/kategorie/obst-gemuese?filter=Regional' },
-              { label: 'Angebote',   to: '/kategorie/suesses-salziges?filter=Angebot', gelb: true },
-              { label: 'Neu',        to: '/kategorie/kuchen-gebaeck' },
-            ].map(item => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                  item.gelb
-                    ? 'text-brand-yellow font-bold hover:bg-white/10'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+              { label: 'Sortiment', to: '/',                                          end: true },
+              { label: 'Bio',       to: '/kategorie/obst-gemuese?filter=Bio',         match: '/kategorie/obst-gemuese' },
+              { label: 'Regional',  to: '/kategorie/obst-gemuese?filter=Regional',    match: '/kategorie/obst-gemuese' },
+              { label: 'Angebote',  to: '/kategorie/suesses-salziges?filter=Angebot', match: '/kategorie/suesses-salziges', gelb: true },
+              { label: 'Neu',       to: '/kategorie/kuchen-gebaeck',                  match: '/kategorie/kuchen-gebaeck' },
+            ].map(item => {
+              const istAktiv = item.end
+                ? location.pathname === '/'
+                : location.pathname === (item.match || item.to.split('?')[0])
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors border-b-2 ${
+                    istAktiv
+                      ? 'text-white border-brand-yellow'
+                      : item.gelb
+                        ? 'text-brand-yellow border-transparent hover:bg-white/10'
+                        : 'text-gray-300 border-transparent hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
+            })}
           </nav>
         </div>
       </div>
