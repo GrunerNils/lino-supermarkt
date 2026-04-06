@@ -50,8 +50,8 @@ export const KATEGORIEN = [
 ]
 
 export const EMPFEHLUNGS_PILLS = [
-  { label: 'Menü-Highlights', icon: '🍽️' },
-  { label: 'Bewusste Ernährung', icon: '🥗' },
-  { label: 'Regional', icon: '🌱' },
-  { label: 'Saisonal', icon: '🌸' },
+  { label: 'Menü-Highlights',   icon: '🍽️', to: '/kategorie/fertiggerichte' },
+  { label: 'Bewusste Ernährung', icon: '🥗', to: '/kategorie/obst-gemuese?filter=Bio' },
+  { label: 'Regional',          icon: '🌱', to: '/kategorie/obst-gemuese?filter=Regional' },
+  { label: 'Saisonal',          icon: '🌸', to: '/kategorie/obst-gemuese' },
 ]

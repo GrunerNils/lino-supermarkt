@@ -12,7 +12,9 @@ export default function KategoriePage() {
   const [searchParams] = useSearchParams()
   const sucheQ = searchParams.get('q') || ''
 
-  const [aktiveFilter, setAktiveFilter] = useState([])
+  // Filter kann auch über URL vorbelegt werden (z.B. ?filter=Bio vom Header)
+  const filterAusUrl = searchParams.get('filter')
+  const [aktiveFilter, setAktiveFilter] = useState(filterAusUrl ? [filterAusUrl] : [])
   const [aktiveSub, setAktiveSub] = useState(null)
   const [sortierung, setSortierung] = useState('relevanz')
 

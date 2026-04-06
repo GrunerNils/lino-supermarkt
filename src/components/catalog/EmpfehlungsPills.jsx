@@ -1,8 +1,15 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { EMPFEHLUNGS_PILLS } from '../../data/kategorien'
 
 export default function EmpfehlungsPills() {
   const [aktiv, setAktiv] = useState(0)
+  const navigate = useNavigate()
+
+  const handleKlick = (pill, i) => {
+    setAktiv(i)
+    if (pill.to) navigate(pill.to)
+  }
 
   return (
     <section className="my-6">
@@ -11,7 +18,7 @@ export default function EmpfehlungsPills() {
         {EMPFEHLUNGS_PILLS.map((pill, i) => (
           <button
             key={i}
-            onClick={() => setAktiv(i)}
+            onClick={() => handleKlick(pill, i)}
             className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
               aktiv === i
                 ? 'bg-text-dark text-white border-text-dark'

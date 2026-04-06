@@ -42,13 +42,14 @@ export default function Header({ plz, markt, onMarktAendern }) {
           {/* Haupt-Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             <NavLink
-              to="/maerkte"
+              to="/kategorie/suesse-salziges"
               className="px-4 py-2 text-sm font-medium text-gray-200 hover:text-white hover:bg-white/15 rounded transition-colors"
             >
               Markt &amp; Angebote
             </NavLink>
             <NavLink
               to="/"
+              end
               className={({ isActive }) =>
                 `px-4 py-2 text-sm font-bold rounded transition-colors ${
                   isActive
@@ -60,7 +61,7 @@ export default function Header({ plz, markt, onMarktAendern }) {
               Abholservice
             </NavLink>
             <NavLink
-              to="/rezepte"
+              to="/kategorie/obst-gemuese?filter=Bio"
               className="px-4 py-2 text-sm font-medium text-gray-200 hover:text-white hover:bg-white/15 rounded transition-colors"
             >
               Ernährung
@@ -156,11 +157,11 @@ export default function Header({ plz, markt, onMarktAendern }) {
           {/* Sub-Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {[
-              { label: 'Sortiment', to: '/kategorie/obst-gemuese' },
-              { label: 'Bio', to: '/kategorie/obst-gemuese' },
-              { label: 'Regional', to: '/kategorie/obst-gemuese' },
-              { label: 'Angebote', to: '/kategorie/obst-gemuese', gelb: true },
-              { label: 'Neu', to: '/kategorie/obst-gemuese' },
+              { label: 'Sortiment',  to: '/' },
+              { label: 'Bio',        to: '/kategorie/obst-gemuese?filter=Bio' },
+              { label: 'Regional',   to: '/kategorie/obst-gemuese?filter=Regional' },
+              { label: 'Angebote',   to: '/kategorie/suesses-salziges?filter=Angebot', gelb: true },
+              { label: 'Neu',        to: '/kategorie/kuchen-gebaeck' },
             ].map(item => (
               <Link
                 key={item.label}

@@ -5,7 +5,7 @@ export default function HeroBanner() {
     <div className="relative bg-gradient-to-r from-gray-800 to-gray-600 overflow-hidden" style={{ minHeight: '300px' }}>
       {/* Hintergrundbild */}
       <img
-        src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=1400&q=80"
+        src="/oben1.avif"
         alt="Frische Lebensmittel"
         className="absolute inset-0 w-full h-full object-cover opacity-40"
       />
