@@ -4,18 +4,9 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/checkout.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 10
-    },
-    "api/webhook.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 30
-    },
-    "api/warenwirtschaft.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 10
-    }
+    "api/checkout.js": { "maxDuration": 10 },
+    "api/webhook.js": { "maxDuration": 30 },
+    "api/warenwirtschaft.js": { "maxDuration": 10 }
   },
   "headers": [
     {
