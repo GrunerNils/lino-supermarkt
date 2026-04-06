@@ -12,6 +12,7 @@ import AbholterminPage from './pages/AbholterminPage'
 import ZahlungPage from './pages/ZahlungPage'
 import BestellenPage from './pages/BestellenPage'
 import BestellbestaetigungPage from './pages/BestellbestaetigungPage'
+import AdminPage from './pages/AdminPage'
 
 export default function App() {
   const [plz, setPlz] = useState(() => localStorage.getItem('edeka-plz') || null)
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/bestellen" element={<BestellenPage />} />
           <Route path="/bestellbestaetigung/:id" element={<BestellbestaetigungPage />} />
 
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </CartProvider>

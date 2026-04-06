@@ -1,38 +1,61 @@
 /**
  * API Service Layer
  *
- * Aktuell: gibt Mock-Daten zurück (aus produkte.js / maerkte.js)
- * Später:  einfach die Funktionen auf echte API-Calls umstellen,
- *          der Rest der App bleibt unverändert.
+ * Automatisch: wenn Supabase-Keys in .env.local → echte DB
+ *              sonst → lokale Mock-Daten
  *
- * Beispiel für echte API:
- *   const res = await fetch(`${import.meta.env.VITE_API_URL}/produkte`)
- *   return res.json()
+ * Programmierer müssen NUR die .env.local ausfüllen.
  */
 
+import { supabase, supabaseAktiv } from './supabase'
 import { PRODUKTE } from '../data/produkte'
 import { MAERKTE } from '../data/maerkte'
 
-// ── Produkte ──────────────────────────────────────────────────────
+// ── Produkte ──────────────────────────────────────────────────
 
 export async function fetchProdukte() {
-  // TODO: ersetzen durch echten API-Call
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/produkte`)
-  // return res.json()
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('produkte')
+      .select('*, kategorien(label, slug)')
+      .eq('aktiv', true)
+      .order('name')
+    if (error) console.error('fetchProdukte:', error)
+    return data || []
+  }
   return PRODUKTE
 }
 
 export async function fetchProduktById(id) {
-  // TODO: ersetzen durch echten API-Call
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/produkte/${id}`)
-  // return res.json()
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('produkte')
+      .select('*')
+      .eq('id', id)
+      .eq('aktiv', true)
+      .single()
+    if (error) console.error('fetchProduktById:', error)
+    return data || null
+  }
   return PRODUKTE.find(p => p.id === Number(id)) || null
 }
 
 export async function fetchProdukteByKategorie(slug, marktId = null) {
-  // TODO: ersetzen durch echten API-Call mit marktId Filter
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/produkte?kategorie=${slug}&markt=${marktId}`)
-  // return res.json()
+  if (supabaseAktiv) {
+    let query = supabase
+      .from('produkte')
+      .select('*, markt_produkte!inner(markt_id, verfuegbar, lagerbestand)')
+      .eq('kategorie_slug', slug)
+      .eq('aktiv', true)
+    if (marktId) {
+      query = query
+        .eq('markt_produkte.markt_id', marktId)
+        .eq('markt_produkte.verfuegbar', true)
+    }
+    const { data, error } = await query.order('name')
+    if (error) console.error('fetchProdukteByKategorie:', error)
+    return data || []
+  }
   let produkte = PRODUKTE.filter(p => p.kategorie === slug)
   if (marktId) {
     produkte = produkte.filter(p =>
@@ -43,16 +66,33 @@ export async function fetchProdukteByKategorie(slug, marktId = null) {
 }
 
 export async function fetchProdukteByMarkt(marktId) {
-  // Alle Produkte die in diesem Markt verfügbar sind
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('produkte')
+      .select('*, markt_produkte!inner(markt_id, verfuegbar, lagerbestand)')
+      .eq('markt_produkte.markt_id', marktId)
+      .eq('markt_produkte.verfuegbar', true)
+      .eq('aktiv', true)
+    if (error) console.error('fetchProdukteByMarkt:', error)
+    return data || []
+  }
   return PRODUKTE.filter(p =>
     !p.verfuegbarIn || p.verfuegbarIn.includes(Number(marktId))
   )
 }
 
 export async function sucheProdukte(query, marktId = null) {
-  // TODO: ersetzen durch echten API-Call
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/produkte/suche?q=${query}&markt=${marktId}`)
-  // return res.json()
+  if (supabaseAktiv) {
+    let dbQuery = supabase
+      .from('produkte')
+      .select('*')
+      .ilike('name', `%${query}%`)
+      .eq('aktiv', true)
+      .limit(5)
+    const { data, error } = await dbQuery
+    if (error) console.error('sucheProdukte:', error)
+    return data || []
+  }
   let produkte = PRODUKTE.filter(p =>
     p.name.toLowerCase().includes(query.toLowerCase())
   )
@@ -64,39 +104,148 @@ export async function sucheProdukte(query, marktId = null) {
   return produkte.slice(0, 5)
 }
 
-// ── Märkte ────────────────────────────────────────────────────────
+// ── Märkte ────────────────────────────────────────────────────
 
 export async function fetchMaerkte() {
-  // TODO: ersetzen durch echten API-Call
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/maerkte`)
-  // return res.json()
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('maerkte')
+      .select('*')
+      .eq('aktiv', true)
+      .order('name')
+    if (error) console.error('fetchMaerkte:', error)
+    return data || []
+  }
   return MAERKTE
 }
 
 export async function fetchMarktById(id) {
-  // TODO: ersetzen durch echten API-Call
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('maerkte')
+      .select('*')
+      .eq('id', id)
+      .single()
+    if (error) console.error('fetchMarktById:', error)
+    return data || null
+  }
   return MAERKTE.find(m => m.id === Number(id)) || null
 }
 
 export async function fetchMaerkteByPlz(plz) {
-  // TODO: echte PLZ-basierte Suche (z.B. Umkreissuche via Google Maps API)
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/maerkte?plz=${plz}`)
-  // return res.json()
+  if (supabaseAktiv) {
+    // Alle aktiven Märkte laden + Frontend sortiert nach Entfernung
+    const { data, error } = await supabase
+      .from('maerkte')
+      .select('*')
+      .eq('aktiv', true)
+    if (error) console.error('fetchMaerkteByPlz:', error)
+    return data || []
+  }
   return MAERKTE
 }
 
-// ── Bestellungen ──────────────────────────────────────────────────
+// ── Lagerbestand ──────────────────────────────────────────────
+
+export async function fetchLagerbestand(marktId) {
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('markt_produkte')
+      .select('produkt_id, verfuegbar, lagerbestand')
+      .eq('markt_id', marktId)
+    if (error) console.error('fetchLagerbestand:', error)
+    return (data || []).reduce((acc, row) => {
+      acc[row.produkt_id] = {
+        verfuegbar: row.verfuegbar,
+        menge: row.lagerbestand,
+      }
+      return acc
+    }, {})
+  }
+  // Mock: zufälliger Lagerbestand
+  return PRODUKTE.reduce((acc, p) => {
+    const menge = Math.floor(Math.random() * 20) + 1
+    acc[p.id] = { verfuegbar: menge > 0, menge }
+    return acc
+  }, {})
+}
+
+// ── Abholslots ────────────────────────────────────────────────
+
+export async function fetchAbholslots(marktId) {
+  if (supabaseAktiv) {
+    const heute = new Date().toISOString().split('T')[0]
+    const { data, error } = await supabase
+      .from('abholslots')
+      .select('*')
+      .eq('markt_id', marktId)
+      .eq('aktiv', true)
+      .gte('datum', heute)
+      .lt('gebucht', supabase.raw('kapazitaet'))
+      .order('datum')
+      .order('uhrzeit')
+    if (error) console.error('fetchAbholslots:', error)
+    return data || []
+  }
+  // Mock: nächste 7 Tage
+  const slots = []
+  const heute = new Date()
+  for (let i = 1; i <= 7; i++) {
+    const datum = new Date(heute)
+    datum.setDate(heute.getDate() + i)
+    const datumStr = datum.toISOString().split('T')[0]
+    const wochentag = datum.toLocaleDateString('de-DE', { weekday: 'long' })
+    const tag = datum.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+    slots.push({
+      datum: datumStr,
+      anzeige: `${wochentag}, ${tag}`,
+      zeiten: ['08:00–09:00', '09:00–10:00', '10:00–11:00', '11:00–12:00',
+               '13:00–14:00', '14:00–15:00', '15:00–16:00', '16:00–17:00'],
+    })
+  }
+  return slots
+}
+
+// ── Bestellungen ──────────────────────────────────────────────
 
 export async function bestellungSpeichern(bestellung) {
-  // TODO: ersetzen durch echten API-Call
-  // const res = await fetch(`${import.meta.env.VITE_API_URL}/bestellungen`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(bestellung),
-  // })
-  // return res.json()
+  if (supabaseAktiv) {
+    const bestellId = `ORD-${Date.now()}`
+    // Bestellung speichern
+    const { error: bestellFehler } = await supabase
+      .from('bestellungen')
+      .insert({
+        id: bestellId,
+        markt_id: bestellung.markt.id,
+        abhol_datum: bestellung.slot.datum,
+        abhol_uhrzeit: bestellung.slot.uhrzeit,
+        kunde_name: bestellung.kunde.name,
+        kunde_email: bestellung.kunde.email,
+        kunde_telefon: bestellung.kunde.telefon || null,
+        gesamt_preis: bestellung.gesamtPreis,
+        zahlungsart: bestellung.zahlungsart,
+        status: 'offen',
+      })
+    if (bestellFehler) throw bestellFehler
 
-  // Mock: in localStorage speichern
+    // Bestellpositionen speichern
+    const positionen = bestellung.artikel.map(({ produkt, menge }) => ({
+      bestellung_id: bestellId,
+      produkt_id: produkt.id,
+      produkt_name: produkt.name,
+      menge,
+      einzelpreis: produkt.preis,
+      gesamt: produkt.preis * menge,
+    }))
+    const { error: posFehler } = await supabase
+      .from('bestellpositionen')
+      .insert(positionen)
+    if (posFehler) throw posFehler
+
+    return { id: bestellId, erfolg: true }
+  }
+
+  // Mock: localStorage
   const id = `ORD-${Date.now()}`
   const bestellungen = JSON.parse(localStorage.getItem('bestellungen') || '[]')
   bestellungen.push({ ...bestellung, id, erstelltAm: new Date().toISOString() })
@@ -105,23 +254,44 @@ export async function bestellungSpeichern(bestellung) {
 }
 
 export async function fetchBestellungById(id) {
-  // TODO: ersetzen durch echten API-Call
+  if (supabaseAktiv) {
+    const { data, error } = await supabase
+      .from('bestellungen')
+      .select('*, bestellpositionen(*), maerkte(*)')
+      .eq('id', id)
+      .single()
+    if (error) console.error('fetchBestellungById:', error)
+    return data || null
+  }
   const bestellungen = JSON.parse(localStorage.getItem('bestellungen') || '[]')
   return bestellungen.find(b => b.id === id) || null
 }
 
-// ── Lagerbestand ──────────────────────────────────────────────────
+// ── Admin: Alle Bestellungen eines Markts ─────────────────────
 
-export async function fetchLagerbestand(marktId) {
-  // TODO: echte Warenwirtschafts-Anbindung
-  // const res = await fetch(`${import.meta.env.VITE_API_WARENWIRTSCHAFT_URL}/lagerbestand?markt=${marktId}`, {
-  //   headers: { 'X-API-Key': import.meta.env.VITE_API_WARENWIRTSCHAFT_KEY }
-  // })
-  // return res.json()
+export async function fetchBestellungenAdmin(marktId, status = null) {
+  if (supabaseAktiv) {
+    let query = supabase
+      .from('bestellungen')
+      .select('*, bestellpositionen(*)')
+      .eq('markt_id', marktId)
+      .order('erstellt_am', { ascending: false })
+    if (status) query = query.eq('status', status)
+    const { data, error } = await query
+    if (error) console.error('fetchBestellungenAdmin:', error)
+    return data || []
+  }
+  return JSON.parse(localStorage.getItem('bestellungen') || '[]')
+}
 
-  // Mock: alle Produkte als verfügbar markieren
-  return PRODUKTE.reduce((acc, p) => {
-    acc[p.id] = { verfuegbar: true, menge: Math.floor(Math.random() * 50) + 5 }
-    return acc
-  }, {})
+export async function bestellungStatusAktualisieren(bestellId, status) {
+  if (supabaseAktiv) {
+    const { error } = await supabase
+      .from('bestellungen')
+      .update({ status, aktualisiert_am: new Date().toISOString() })
+      .eq('id', bestellId)
+    if (error) throw error
+    return { erfolg: true }
+  }
+  return { erfolg: true }
 }

@@ -4,8 +4,27 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
+    "api/checkout.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 10
+    },
+    "api/webhook.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    },
+    "api/warenwirtschaft.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 10
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, x-api-key" }
+      ]
+    }
+  ]
 }

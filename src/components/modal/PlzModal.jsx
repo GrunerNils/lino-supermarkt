@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { XMarkIcon, MapPinIcon, ClockIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
-import { MAERKTE } from '../../data/maerkte'
+import { MapPinIcon, ClockIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { fetchMaerkteByPlz } from '../../services/api'
+import { plzZuKoordinaten, maerkteNachEntfernungSortieren } from '../../utils/entfernung'
 
 export default function PlzModal({ onMarktGewaehlt }) {
   const [schritt, setSchritt] = useState('plz') // 'plz' | 'markt'
@@ -44,9 +45,29 @@ export default function PlzModal({ onMarktGewaehlt }) {
     e.preventDefault()
   }
 
-  const suchen = () => {
+  const [maerkte, setMaerkte] = useState([])
+  const [ladeMarkte, setLadeMarkte] = useState(false)
+
+  const suchen = async () => {
     if (!plzVollstaendig) { setFehler('Bitte gib eine vollständige Postleitzahl ein.'); return }
-    setSchritt('markt')
+    setLadeMarkte(true)
+    try {
+      const alleMaerkte = await fetchMaerkteByPlz(plz)
+      // Koordinaten der PLZ ermitteln und Märkte sortieren
+      const koordinaten = await plzZuKoordinaten(plz)
+      if (koordinaten) {
+        const sortiert = maerkteNachEntfernungSortieren(alleMaerkte, koordinaten.lat, koordinaten.lon)
+        setMaerkte(sortiert)
+      } else {
+        setMaerkte(alleMaerkte)
+      }
+    } catch (e) {
+      console.error(e)
+      setMaerkte([])
+    } finally {
+      setLadeMarkte(false)
+      setSchritt('markt')
+    }
   }
 
   const marktWaehlen = (markt) => {
@@ -109,14 +130,14 @@ export default function PlzModal({ onMarktGewaehlt }) {
               {/* Button */}
               <button
                 onClick={suchen}
-                disabled={!plzVollstaendig}
+                disabled={!plzVollstaendig || ladeMarkte}
                 className={`w-full py-3.5 rounded-xl font-bold text-sm mt-4 transition-colors ${
                   plzVollstaendig
                     ? 'bg-brand-yellow hover:bg-brand-yellow-dark text-gray-900 cursor-pointer'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Abhol- und Lieferservice finden
+                {ladeMarkte ? '🔍 Suche Märkte...' : 'Abhol- und Lieferservice finden'}
               </button>
 
               {/* Marktangebote Link */}
@@ -152,7 +173,7 @@ export default function PlzModal({ onMarktGewaehlt }) {
 
             {/* Markt-Liste */}
             <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
-              {MAERKTE.map((markt) => (
+              {maerkte.map((markt) => (
                 <div key={markt.id} className="px-5 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-2 mb-2">
                     <MapPinIcon className="w-4 h-4 text-brand-red flex-shrink-0 mt-0.5" />

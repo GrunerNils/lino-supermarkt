@@ -5,34 +5,55 @@ import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid'
 import toast from 'react-hot-toast'
 import { useCart } from '../../context/CartContext'
 import MengenAuswahl from '../ui/MengenAuswahl'
+import { useLagerbestand } from '../../hooks/useLagerbestand'
 
 export default function ProduktKarte({ produkt }) {
   const { artikel, artikelHinzufuegen } = useCart()
+  const { getBestand } = useLagerbestand()
   const [favorit, setFavorit] = useState(false)
 
   const imWarenkorb = artikel.find(a => a.produkt.id === produkt.id)
+  const bestand = getBestand(produkt.id)
+  const nichtVerfuegbar = !bestand.verfuegbar
+  const wenigAufLager = bestand.verfuegbar && bestand.menge <= 5
 
   const hinzufuegen = (e) => {
     e.preventDefault()
+    if (nichtVerfuegbar) return
     artikelHinzufuegen(produkt)
     toast.success(`${produkt.name} hinzugefügt`)
   }
 
-  // Rabatt berechnen
   const rabatt = produkt.originalPreis
     ? Math.round((1 - produkt.preis / produkt.originalPreis) * 100)
     : null
 
-  // Preis formatieren: ganzer Teil + Dezimalstellen getrennt (EDEKA-Stil)
   const preisGanz = Math.floor(produkt.preis)
-  const preisDez = (produkt.preis % 1).toFixed(2).slice(1) // ".55" → ".55"
+  const preisDez = (produkt.preis % 1).toFixed(2).slice(1)
 
   return (
-    <div className="bg-white border border-gray-100 hover:shadow-lg transition-shadow group relative flex flex-col">
+    <div className={`bg-white border hover:shadow-lg transition-shadow group relative flex flex-col ${nichtVerfuegbar ? 'opacity-60 border-gray-100' : 'border-gray-100'}`}>
+
+      {/* Ausverkauft-Overlay */}
+      {nichtVerfuegbar && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/70 rounded">
+          <span className="bg-gray-800 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+            Nicht verfügbar
+          </span>
+        </div>
+      )}
+
       {/* Rabatt-Badge */}
-      {rabatt && (
+      {rabatt && !nichtVerfuegbar && (
         <div className="absolute top-7 left-2 z-10 bg-brand-red text-white font-black text-sm px-2 py-0.5 rounded">
           -{rabatt}%
+        </div>
+      )}
+
+      {/* Wenig auf Lager Badge */}
+      {wenigAufLager && !nichtVerfuegbar && (
+        <div className="absolute top-2 left-2 z-10 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded">
+          Nur noch {bestand.menge}
         </div>
       )}
 
@@ -60,7 +81,7 @@ export default function ProduktKarte({ produkt }) {
         </div>
       </Link>
 
-      {/* Preisbereich – großer roter Preis rechts unten (EDEKA-Stil) */}
+      {/* Preis */}
       <div className="px-3 pb-1 flex items-end justify-end">
         {produkt.originalPreis && (
           <span className="text-xs text-gray-400 line-through mr-2 mb-1">{produkt.originalPreis.toFixed(2)}</span>
@@ -80,7 +101,6 @@ export default function ProduktKarte({ produkt }) {
         </Link>
         <p className="text-xs text-gray-400 line-clamp-2 mb-1 leading-snug">{produkt.beschreibung}</p>
 
-        {/* Grundpreis */}
         <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
           <div>
             {produkt.badges?.length > 0 && (
@@ -99,7 +119,8 @@ export default function ProduktKarte({ produkt }) {
           ) : (
             <button
               onClick={hinzufuegen}
-              className="relative flex items-center justify-center w-9 h-9 bg-brand-green hover:bg-brand-green-dark active:scale-95 text-white rounded-full shadow-md hover:shadow-lg transition-all flex-shrink-0 group/btn"
+              disabled={nichtVerfuegbar}
+              className="relative flex items-center justify-center w-9 h-9 bg-brand-green hover:bg-brand-green-dark active:scale-95 text-white rounded-full shadow-md hover:shadow-lg transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label="In den Warenkorb"
             >
               <ShoppingCartIcon className="w-4 h-4" />
