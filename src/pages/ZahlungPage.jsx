@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { CreditCardIcon, BanknotesIcon } from '@heroicons/react/24/outline'
+import { CreditCardIcon, LockClosedIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import { useCart } from '../context/CartContext'
 import CheckoutStepper from '../components/checkout/CheckoutStepper'
+import { formatPreis } from '../utils/formatters'
 
 const ZAHLUNGSARTEN = [
   { id: 'kreditkarte', label: 'Kreditkarte', icon: '💳', beschreibung: 'Visa, Mastercard, American Express' },
@@ -12,10 +13,11 @@ const ZAHLUNGSARTEN = [
 ]
 
 export default function ZahlungPage() {
-  const { istLeer, zahlungsartSetzen, zahlungsart: gespeicherteZahlungsart } = useCart()
+  const { istLeer, zahlungsartSetzen, zahlungsart: gespeicherteZahlungsart, gesamtPreis, artikel, gewaehlterMarkt, gewaehlterSlot } = useCart()
   const navigate = useNavigate()
   const [gewaehlt, setGewaehlt] = useState(gespeicherteZahlungsart || null)
   const [karte, setKarte] = useState({ nummer: '', ablauf: '', cvv: '', name: '' })
+  const [stripeLoading, setStripeLoading] = useState(false)
 
   useEffect(() => {
     if (istLeer) navigate('/warenkorb')
@@ -25,6 +27,33 @@ export default function ZahlungPage() {
     if (!gewaehlt) return
     zahlungsartSetzen(gewaehlt)
     navigate('/bestellen')
+  }
+
+  // Stripe Checkout — wird aktiv sobald VITE_STRIPE_PUBLISHABLE_KEY gesetzt ist
+  const stripeAktiv = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+
+  const handleStripeCheckout = async () => {
+    setStripeLoading(true)
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artikel, markt: gewaehlterMarkt, slot: gewaehlterSlot }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        // Echte Stripe-Weiterleitung
+        window.location.href = data.url
+      } else {
+        // Demo-Modus
+        zahlungsartSetzen('kreditkarte')
+        navigate('/bestellen')
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setStripeLoading(false)
+    }
   }
 
   return (
@@ -122,13 +151,36 @@ export default function ZahlungPage() {
           </div>
         )}
 
-        <button
-          onClick={weiter}
-          disabled={!gewaehlt}
-          className="w-full bg-brand-yellow hover:bg-brand-yellow-dark disabled:opacity-40 disabled:cursor-not-allowed text-text-dark font-bold py-3 rounded-lg transition-colors"
-        >
-          Weiter zur Bestellübersicht →
-        </button>
+        {/* Stripe-Button (aktiv wenn API-Key gesetzt) */}
+        {stripeAktiv ? (
+          <button
+            onClick={handleStripeCheckout}
+            disabled={stripeLoading}
+            className="w-full bg-brand-yellow hover:bg-brand-yellow-dark disabled:opacity-40 text-text-dark font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm text-base"
+          >
+            <LockClosedIcon className="w-4 h-4" />
+            {stripeLoading ? 'Weiterleitung zu Stripe...' : `Jetzt bezahlen – ${formatPreis(gesamtPreis)}`}
+          </button>
+        ) : (
+          <button
+            onClick={weiter}
+            disabled={!gewaehlt}
+            className="w-full bg-brand-yellow hover:bg-brand-yellow-dark disabled:opacity-40 disabled:cursor-not-allowed text-text-dark font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+          >
+            Weiter zur Bestellübersicht →
+          </button>
+        )}
+
+        {/* Stripe Hinweis */}
+        <div className="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
+          <ShieldCheckIcon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-blue-800">Bereit für echte Zahlungen</p>
+            <p className="text-xs text-blue-600 mt-0.5">
+              Stripe-Integration ist vorbereitet. Sobald der <code className="bg-blue-100 px-1 rounded">STRIPE_SECRET_KEY</code> in Vercel gesetzt wird, sind echte Zahlungen aktiv.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
