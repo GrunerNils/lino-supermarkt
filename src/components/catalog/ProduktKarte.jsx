@@ -1,3 +1,13 @@
+/**
+ * ProduktKarte — Produktkachel im Kategoriegitter
+ * ───────────────────────────────────────────────────────────────
+ * Zeigt Bild, Name, Preis und Warenkorb-Button.
+ * Reagiert automatisch auf den Lagerbestand des gewählten Markts:
+ *   - nichtVerfuegbar → Grau-Overlay + Button deaktiviert
+ *   - wenigAufLager (≤5) → oranges "Nur noch X" Badge
+ *   - imWarenkorb → Mengenauswahl [- 2 +] statt Add-Button
+ */
+
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeartIcon, PlusIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
@@ -12,10 +22,10 @@ export default function ProduktKarte({ produkt }) {
   const { getBestand } = useLagerbestand()
   const [favorit, setFavorit] = useState(false)
 
-  const imWarenkorb = artikel.find(a => a.produkt.id === produkt.id)
-  const bestand = getBestand(produkt.id)
+  const imWarenkorb    = artikel.find(a => a.produkt.id === produkt.id)
+  const bestand        = getBestand(produkt.id)
   const nichtVerfuegbar = !bestand.verfuegbar
-  const wenigAufLager = bestand.verfuegbar && bestand.menge <= 5
+  const wenigAufLager  = bestand.verfuegbar && bestand.menge <= 5
 
   const hinzufuegen = (e) => {
     e.preventDefault()

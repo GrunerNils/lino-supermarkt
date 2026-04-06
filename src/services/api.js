@@ -1,10 +1,22 @@
 /**
- * API Service Layer
+ * API Service Layer — HAUPTINTEGRATIONSPUNKT
+ * ───────────────────────────────────────────────────────────────
+ * ALLE Datenbankzugriffe der App laufen durch diese Datei.
+ * Keine Komponente greift direkt auf Supabase oder localStorage zu.
  *
- * Automatisch: wenn Supabase-Keys in .env.local → echte DB
- *              sonst → lokale Mock-Daten
+ * WARUM dieses Muster?
+ *   Wenn ihr das Warenwirtschaftssystem anbindet oder die DB wechselt,
+ *   ändert ihr NUR diese Datei — der Rest der App bleibt unberührt.
  *
- * Programmierer müssen NUR die .env.local ausfüllen.
+ * AUTOMATISCHES SWITCHING:
+ *   supabaseAktiv = true  → echte Supabase-Abfragen
+ *   supabaseAktiv = false → Mock-Daten aus src/data/ (Demo-Modus)
+ *
+ * FÜR PROGRAMMIERER:
+ *   1. Supabase-Keys in .env.local setzen → supabaseAktiv wird true
+ *   2. Die DB-Abfragen laufen dann automatisch
+ *   3. Für Warenwirtschafts-Anbindung: fetchProdukte() + fetchLagerbestand()
+ *      durch eigene API-Calls ersetzen
  */
 
 import { supabase, supabaseAktiv } from './supabase'
@@ -13,6 +25,11 @@ import { MAERKTE } from '../data/maerkte'
 
 // ── Produkte ──────────────────────────────────────────────────
 
+/**
+ * Alle aktiven Produkte laden.
+ * Im echten Betrieb: kommt aus Supabase "produkte" Tabelle.
+ * Warenwirtschaft: kann hier auch direkt die externe API aufgerufen werden.
+ */
 export async function fetchProdukte() {
   if (supabaseAktiv) {
     const { data, error } = await supabase
@@ -26,6 +43,9 @@ export async function fetchProdukte() {
   return PRODUKTE
 }
 
+/**
+ * Ein Produkt anhand der ID laden (für Detailseite).
+ */
 export async function fetchProduktById(id) {
   if (supabaseAktiv) {
     const { data, error } = await supabase
@@ -40,6 +60,13 @@ export async function fetchProduktById(id) {
   return PRODUKTE.find(p => p.id === Number(id)) || null
 }
 
+/**
+ * Produkte einer Kategorie laden — optional gefiltert nach Markt.
+ *
+ * WARUM marktId optional? Auf der Startseite gibt es noch keinen
+ * gewählten Markt. Erst wenn ein Markt gewählt ist, wird das
+ * markt-spezifische Sortiment gefiltert.
+ */
 export async function fetchProdukteByKategorie(slug, marktId = null) {
   if (supabaseAktiv) {
     let query = supabase
@@ -65,6 +92,10 @@ export async function fetchProdukteByKategorie(slug, marktId = null) {
   return produkte
 }
 
+/**
+ * Alle Produkte die ein bestimmter Markt führt.
+ * Nutzt die Verbindungstabelle markt_produkte (Markt ↔ Produkt ↔ Lagerbestand).
+ */
 export async function fetchProdukteByMarkt(marktId) {
   if (supabaseAktiv) {
     const { data, error } = await supabase
@@ -81,6 +112,10 @@ export async function fetchProdukteByMarkt(marktId) {
   )
 }
 
+/**
+ * Live-Suche im Header (max. 5 Ergebnisse).
+ * ilike = case-insensitive LIKE in Postgres.
+ */
 export async function sucheProdukte(query, marktId = null) {
   if (supabaseAktiv) {
     let dbQuery = supabase
@@ -106,6 +141,10 @@ export async function sucheProdukte(query, marktId = null) {
 
 // ── Märkte ────────────────────────────────────────────────────
 
+/**
+ * Alle aktiven Märkte laden.
+ * Im Mock: 9 echte nah&gut Filialen mit echten Adressen (src/data/maerkte.js).
+ */
 export async function fetchMaerkte() {
   if (supabaseAktiv) {
     const { data, error } = await supabase
@@ -132,9 +171,17 @@ export async function fetchMarktById(id) {
   return MAERKTE.find(m => m.id === Number(id)) || null
 }
 
+/**
+ * Märkte für die PLZ-Suche laden.
+ * Die Entfernungssortierung passiert im Frontend (src/utils/entfernung.js)
+ * mit OpenStreetMap Nominatim für PLZ → GPS-Koordinaten.
+ *
+ * WARUM im Frontend sortieren? Nominatim ist eine externe API —
+ * wäre im Backend eine unnötige zusätzliche Abhängigkeit.
+ */
 export async function fetchMaerkteByPlz(plz) {
   if (supabaseAktiv) {
-    // Alle aktiven Märkte laden + Frontend sortiert nach Entfernung
+    // Alle aktiven Märkte laden → Frontend sortiert nach Entfernung
     const { data, error } = await supabase
       .from('maerkte')
       .select('*')
@@ -147,6 +194,17 @@ export async function fetchMaerkteByPlz(plz) {
 
 // ── Lagerbestand ──────────────────────────────────────────────
 
+/**
+ * Lagerbestand eines Markts laden — gibt ein Objekt zurück:
+ *   { [produktId]: { verfuegbar: boolean, menge: number } }
+ *
+ * WARUM dieses Format? Damit Komponenten per getBestand(produktId)
+ * blitzschnell nachschlagen können ohne durch ein Array zu loopen.
+ *
+ * Warenwirtschaft-Anbindung: Diese Funktion gegen die echte
+ * Warenwirtschafts-API ersetzen (GET /lagerbestand?markt=X).
+ * Das Format muss gleich bleiben damit ProduktKarte.jsx funktioniert.
+ */
 export async function fetchLagerbestand(marktId) {
   if (supabaseAktiv) {
     const { data, error } = await supabase
@@ -162,7 +220,7 @@ export async function fetchLagerbestand(marktId) {
       return acc
     }, {})
   }
-  // Mock: zufälliger Lagerbestand
+  // Mock: zufälliger Lagerbestand damit die UI-Zustände sichtbar sind
   return PRODUKTE.reduce((acc, p) => {
     const menge = Math.floor(Math.random() * 20) + 1
     acc[p.id] = { verfuegbar: menge > 0, menge }
@@ -172,6 +230,15 @@ export async function fetchLagerbestand(marktId) {
 
 // ── Abholslots ────────────────────────────────────────────────
 
+/**
+ * Verfügbare Abholtermine eines Markts laden.
+ *
+ * Im echten Betrieb kommen die Slots aus der DB (Tabelle: abholslots).
+ * Admins können dort Kapazitäten und Zeiten verwalten.
+ * kapazitaet - gebucht = noch freie Plätze (nur freie werden zurückgegeben).
+ *
+ * Im Mock: automatisch die nächsten 7 Tage mit fixen Stunden-Slots.
+ */
 export async function fetchAbholslots(marktId) {
   if (supabaseAktiv) {
     const heute = new Date().toISOString().split('T')[0]
@@ -187,7 +254,7 @@ export async function fetchAbholslots(marktId) {
     if (error) console.error('fetchAbholslots:', error)
     return data || []
   }
-  // Mock: nächste 7 Tage
+  // Mock: nächste 7 Tage mit je 8 Zeitslots
   const slots = []
   const heute = new Date()
   for (let i = 1; i <= 7; i++) {
@@ -208,10 +275,19 @@ export async function fetchAbholslots(marktId) {
 
 // ── Bestellungen ──────────────────────────────────────────────
 
+/**
+ * Bestellung speichern — wird vom BestellenPage aufgerufen.
+ *
+ * WICHTIG: Bei Stripe-Integration wird dieser Pfad NICHT mehr genutzt!
+ * Stripe → Webhook (api/webhook.js) → speichert die Bestellung nach
+ * erfolgreicher Zahlung direkt in Supabase.
+ *
+ * Diese Funktion ist für Bar-Zahlung oder wenn Stripe nicht aktiv ist.
+ */
 export async function bestellungSpeichern(bestellung) {
   if (supabaseAktiv) {
     const bestellId = `ORD-${Date.now()}`
-    // Bestellung speichern
+    // Hauptbestellung anlegen
     const { error: bestellFehler } = await supabase
       .from('bestellungen')
       .insert({
@@ -228,11 +304,11 @@ export async function bestellungSpeichern(bestellung) {
       })
     if (bestellFehler) throw bestellFehler
 
-    // Bestellpositionen speichern
+    // Einzelne Artikel als Bestellpositionen speichern
     const positionen = bestellung.artikel.map(({ produkt, menge }) => ({
       bestellung_id: bestellId,
       produkt_id: produkt.id,
-      produkt_name: produkt.name,
+      produkt_name: produkt.name,  // Snapshot des Namens zum Bestellzeitpunkt
       menge,
       einzelpreis: produkt.preis,
       gesamt: produkt.preis * menge,
@@ -245,7 +321,7 @@ export async function bestellungSpeichern(bestellung) {
     return { id: bestellId, erfolg: true }
   }
 
-  // Mock: localStorage
+  // Mock: in localStorage speichern (Demo-Modus)
   const id = `ORD-${Date.now()}`
   const bestellungen = JSON.parse(localStorage.getItem('bestellungen') || '[]')
   bestellungen.push({ ...bestellung, id, erstelltAm: new Date().toISOString() })
@@ -253,6 +329,9 @@ export async function bestellungSpeichern(bestellung) {
   return { id, erfolg: true }
 }
 
+/**
+ * Eine Bestellung anhand ID laden (für Bestätigungsseite nach Checkout).
+ */
 export async function fetchBestellungById(id) {
   if (supabaseAktiv) {
     const { data, error } = await supabase
@@ -267,8 +346,13 @@ export async function fetchBestellungById(id) {
   return bestellungen.find(b => b.id === id) || null
 }
 
-// ── Admin: Alle Bestellungen eines Markts ─────────────────────
+// ── Admin ──────────────────────────────────────────────────────
 
+/**
+ * Alle Bestellungen eines Markts für das Admin-Dashboard.
+ * Sortiert nach Erstelldatum absteigend (neueste zuerst).
+ * Optional nach Status filtern (offen/bezahlt/bereit/abgeholt).
+ */
 export async function fetchBestellungenAdmin(marktId, status = null) {
   if (supabaseAktiv) {
     let query = supabase
@@ -284,6 +368,13 @@ export async function fetchBestellungenAdmin(marktId, status = null) {
   return JSON.parse(localStorage.getItem('bestellungen') || '[]')
 }
 
+/**
+ * Status einer Bestellung aktualisieren.
+ * Mögliche Status: offen → bezahlt → bereit → abgeholt | storniert
+ *
+ * WARUM aktualisiert_am setzen? Damit Admins sehen wann zuletzt
+ * etwas geändert wurde (Audit-Trail light).
+ */
 export async function bestellungStatusAktualisieren(bestellId, status) {
   if (supabaseAktiv) {
     const { error } = await supabase
