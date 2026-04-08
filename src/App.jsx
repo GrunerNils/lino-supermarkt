@@ -15,15 +15,15 @@ import BestellbestaetigungPage from './pages/BestellbestaetigungPage'
 import AdminPage from './pages/AdminPage'
 
 export default function App() {
-  const [plz, setPlz] = useState(() => localStorage.getItem('edeka-plz') || null)
-  const [markt, setMarkt] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('edeka-markt')) } catch { return null }
-  })
-  const [modalOffen, setModalOffen] = useState(false)
+  const [plz, setPlz] = useState(null)
+  const [markt, setMarkt] = useState(null)
+  const [modalOffen, setModalOffen] = useState(true)
 
-  // Modal beim ersten Besuch zeigen (kein Markt gewählt)
+  // Alte localStorage-Einträge aus früheren Versionen bereinigen
   useEffect(() => {
-    if (!markt) setModalOffen(true)
+    localStorage.removeItem('edeka-plz')
+    localStorage.removeItem('edeka-markt')
+    localStorage.removeItem('edeka-warenkorb')
   }, [])
 
   const handleMarktGewaehlt = (neuePlz, neuerMarkt) => {

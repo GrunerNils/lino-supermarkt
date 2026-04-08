@@ -4,10 +4,6 @@ import { MapPinIcon, ClockIcon } from '@heroicons/react/24/outline'
 import { useCart } from '../context/CartContext'
 import CheckoutStepper from '../components/checkout/CheckoutStepper'
 
-function getMarktAusStorage() {
-  try { return JSON.parse(localStorage.getItem('edeka-markt')) } catch { return null }
-}
-
 export default function AbholterminPage() {
   const { istLeer, marktWaehlen, slotWaehlen, gewaehlterMarkt } = useCart()
   const navigate = useNavigate()
@@ -19,8 +15,7 @@ export default function AbholterminPage() {
     if (istLeer) navigate('/warenkorb')
   }, [istLeer])
 
-  // Markt aus Context oder localStorage (vom PLZ-Modal)
-  const aktuellerMarkt = gewaehlterMarkt || getMarktAusStorage()
+  const aktuellerMarkt = gewaehlterMarkt
 
   const datumOptionen = aktuellerMarkt?.abholzeiten || []
   const aktiverTag = datumOptionen.find(t => t.datum === gewaehltesDatum)

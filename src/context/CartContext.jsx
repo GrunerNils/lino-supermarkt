@@ -24,8 +24,7 @@
  *   const { artikel, artikelHinzufuegen, gesamtPreis } = useCart()
  */
 
-import { createContext, useContext, useReducer, useEffect } from 'react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { createContext, useContext, useReducer } from 'react'
 
 const CartContext = createContext(null)
 
@@ -97,21 +96,14 @@ function cartReducer(state, action) {
 }
 
 export function CartProvider({ children }) {
-  const [gespeicherteArtikel, setGespeicherteArtikel] = useLocalStorage('edeka-warenkorb', [])
-
   const anfangsZustand = {
-    artikel: gespeicherteArtikel,
-    gewaehlterMarkt: (() => { try { return JSON.parse(localStorage.getItem('edeka-markt')) } catch { return null } })(),
+    artikel: [],
+    gewaehlterMarkt: null,
     gewaehlterSlot: null,
     zahlungsart: null,
   }
 
   const [state, dispatch] = useReducer(cartReducer, anfangsZustand)
-
-  // Jede Änderung der Artikel sofort in localStorage spiegeln
-  useEffect(() => {
-    setGespeicherteArtikel(state.artikel)
-  }, [state.artikel])
 
   // Berechnete Werte (werden bei jedem Render neu berechnet)
   const gesamtArtikel = state.artikel.reduce((sum, a) => sum + a.menge, 0)

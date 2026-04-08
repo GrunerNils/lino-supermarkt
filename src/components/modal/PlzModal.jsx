@@ -71,8 +71,6 @@ export default function PlzModal({ onMarktGewaehlt }) {
   }
 
   const marktWaehlen = (markt) => {
-    localStorage.setItem('edeka-plz', plz)
-    localStorage.setItem('edeka-markt', JSON.stringify(markt))
     onMarktGewaehlt(plz, markt)
   }
 
