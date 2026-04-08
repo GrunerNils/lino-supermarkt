@@ -97,12 +97,11 @@ function cartReducer(state, action) {
 }
 
 export function CartProvider({ children }) {
-  // Nur Artikel aus localStorage wiederherstellen (nicht Markt/Slot)
   const [gespeicherteArtikel, setGespeicherteArtikel] = useLocalStorage('edeka-warenkorb', [])
 
   const anfangsZustand = {
     artikel: gespeicherteArtikel,
-    gewaehlterMarkt: null,
+    gewaehlterMarkt: (() => { try { return JSON.parse(localStorage.getItem('edeka-markt')) } catch { return null } })(),
     gewaehlterSlot: null,
     zahlungsart: null,
   }
