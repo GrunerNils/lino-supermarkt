@@ -6,7 +6,7 @@ export default function Layout({ children, plz, markt, onMarktAendern }) {
   return (
     <div className="min-h-screen bg-bg-page flex flex-col">
       <Header plz={plz} markt={markt} onMarktAendern={onMarktAendern} />
-      <main className="flex-1">
+      <main className="flex-1 pt-[104px]">
         {children}
       </main>
       <Footer />

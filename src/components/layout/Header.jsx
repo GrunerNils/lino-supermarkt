@@ -25,7 +25,7 @@ export default function Header({ plz, markt, onMarktAendern }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 shadow-lg">
+    <header className="fixed top-0 left-0 right-0 w-full z-40 shadow-lg">
       {/* ── Obere Leiste: Stein-Textur mit dunklem Overlay ── */}
       <div
         className="relative"
