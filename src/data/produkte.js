@@ -1,5 +1,42 @@
 export const PRODUKTE = [
 
+  // ── Obst & Gemüse ─────────────────────────────────────────────────
+  {
+    id: 110, name: 'Äpfel Braeburn', gewicht: '1 kg', kategorie: 'obst-gemuese', unterkategorie: 'Frisches Obst',
+    preis: 2.49, grundpreis: '0,25 €/100g', einheit: 'Beutel',
+    bild: '/obst_aepfel.jpg',
+    beschreibung: 'Frische Braeburn Äpfel – knackig, süß-säuerlich und saftig.',
+    badges: ['Regional'], originalPreis: null, bewertung: 4.6, bewertungsAnzahl: 312, inStock: true, verfuegbarIn: [1,2,3,4,5,6,7,8,9],
+  },
+  {
+    id: 111, name: 'Bananen', gewicht: '1 kg', kategorie: 'obst-gemuese', unterkategorie: 'Frisches Obst',
+    preis: 1.79, grundpreis: '0,18 €/100g', einheit: 'Bund',
+    bild: '/obst_bananen.jpg',
+    beschreibung: 'Reife, süße Bananen – perfekt als schneller Snack oder fürs Müsli.',
+    badges: [], originalPreis: null, bewertung: 4.7, bewertungsAnzahl: 445, inStock: true, verfuegbarIn: [1,2,3,4,5,6,7,8,9],
+  },
+  {
+    id: 112, name: 'Tomaten', gewicht: '500g', kategorie: 'obst-gemuese', unterkategorie: 'Frisches Gemüse',
+    preis: 1.99, grundpreis: '0,40 €/100g', einheit: 'Schale',
+    bild: '/gemuese_tomaten.jpg',
+    beschreibung: 'Frische Tomaten – vollreif, aromatisch und vielseitig verwendbar.',
+    badges: ['Regional'], originalPreis: null, bewertung: 4.5, bewertungsAnzahl: 278, inStock: true, verfuegbarIn: [1,2,3,4,5,6,7,8,9],
+  },
+  {
+    id: 113, name: 'Brokkoli', gewicht: '500g', kategorie: 'obst-gemuese', unterkategorie: 'Frisches Gemüse',
+    preis: 1.49, grundpreis: '0,30 €/100g', einheit: 'Stück',
+    bild: '/gemuese_brokkoli.jpg',
+    beschreibung: 'Frischer Brokkoli – knackig, vitaminreich und ideal gedämpft oder im Auflauf.',
+    badges: [], originalPreis: null, bewertung: 4.4, bewertungsAnzahl: 189, inStock: true, verfuegbarIn: [1,2,3,4,5,6,7,8,9],
+  },
+  {
+    id: 114, name: 'Karotten', gewicht: '1 kg', kategorie: 'obst-gemuese', unterkategorie: 'Frisches Gemüse',
+    preis: 1.29, grundpreis: '0,13 €/100g', einheit: 'Beutel',
+    bild: '/gemuese_karotten.jpg',
+    beschreibung: 'Frische Karotten – süß, knackig und reich an Beta-Carotin.',
+    badges: ['Bio'], originalPreis: null, bewertung: 4.6, bewertungsAnzahl: 334, inStock: true, verfuegbarIn: [1,2,3,4,5,6,7,8,9],
+  },
+
   // ── Kaffee, Tee & Kakao ───────────────────────────────────────────
   {
     id: 1, name: 'Bio Caffè Crema Ganze Bohnen', gewicht: '1 kg', kategorie: 'kaffee-tee', unterkategorie: 'Kaffee',
